@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CEFR Adaptive Reading Assessment</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Libre+Franklin:wght@400;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --ink: #1c1a17;
+        --ink-soft: #57514a;
+        --ink-faint: #8a827a;
+        --paper: #faf7f2;
+        --card: #fffdf9;
+        --line: #e7e0d5;
+        --line-strong: #d8cfc0;
+        --accent: #9a3412;
+        --accent-soft: #c2613a;
+        --accent-wash: #fbeee6;
+        --gold: #b08400;
+        --good: #3f6212;
+        --good-wash: #f0f4e6;
+        --shadow: 0 1px 2px rgba(60,48,32,.04), 0 8px 30px rgba(60,48,32,.07);
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+        font-family: "Inter", system-ui, sans-serif;
+        background: var(--paper);
+        background-image: radial-gradient(circle at 18% 12%, #fff 0, transparent 38%), radial-gradient(circle at 85% 88%, #f4ede1 0, transparent 45%);
+        color: var(--ink);
+        line-height: 1.65;
+        margin: 0;
+        padding: 32px 18px 64px;
+        min-height: 100vh;
+    }
+    .container {
+        max-width: 720px;
+        margin: 0 auto;
+        background: var(--card);
+        padding: 0;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+    }
+    .inner { padding: clamp(26px, 5vw, 52px); }
+    .eyebrow {
+        font-size: .72rem; letter-spacing: .22em; text-transform: uppercase;
+        color: var(--accent); font-weight: 600; margin: 0 0 14px;
+    }
+    h1 {
+        font-family: "Fraunces", serif; font-weight: 600; font-size: clamp(2rem, 6vw, 2.9rem);
+        line-height: 1.05; letter-spacing: -.01em; margin: 0 0 18px; color: var(--ink);
+    }
+    h2 { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.7rem; margin: 0 0 10px; }
+    .lede { font-size: 1.06rem; color: var(--ink-soft); margin: 0 0 16px; max-width: 52ch; }
+    .meta-note {
+        font-size: .9rem; color: var(--ink-faint); display: flex; gap: 10px; align-items: flex-start;
+        background: var(--paper); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin: 26px 0 30px;
+    }
+    .meta-note svg { flex: none; margin-top: 3px; }
+
+    /* progress */
+    .topbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px clamp(26px,5vw,52px); border-bottom: 1px solid var(--line); background: linear-gradient(var(--card), var(--card)); }
+    .stage-label { font-size: .78rem; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); font-weight: 600; }
+    .stage-label b { color: var(--accent); font-weight: 600; }
+    .pips { display: flex; gap: 7px; }
+    .pip { width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong); transition: all .4s ease; }
+    .pip.done { background: var(--accent-soft); }
+    .pip.active { background: var(--accent); box-shadow: 0 0 0 4px var(--accent-wash); transform: scale(1.15); }
+
+    .passage-box {
+        background: linear-gradient(180deg, #fffefb, #fdfaf4);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--accent);
+        border-radius: 12px;
+        padding: 26px 30px;
+        margin: 6px 0 34px;
+    }
+    .passage-box p {
+        font-family: "Newsreader", Georgia, serif;
+        font-size: 1.24rem; line-height: 1.72; color: #2a2722; margin: 0;
+    }
+    .passage-box b {
+        font-weight: 600; color: var(--accent);
+    }
+    .hint { font-size: .82rem; color: var(--ink-faint); margin: -26px 0 30px; display: flex; align-items: center; gap: 7px; }
+    .hint .swatch { font-family: "Newsreader", serif; font-weight: 600; color: var(--accent); }
+
+    .question-block { margin-bottom: 26px; }
+    .qhead { display: flex; gap: 12px; align-items: baseline; margin-bottom: 14px; }
+    .qnum {
+        font-family: "Fraunces", serif; font-weight: 600; font-size: .95rem; color: #fff;
+        background: var(--accent); min-width: 26px; height: 26px; border-radius: 7px;
+        display: inline-flex; align-items: center; justify-content: center; flex: none; margin-top: 1px;
+    }
+    .qtext { font-weight: 500; font-size: 1.04rem; color: var(--ink); }
+    .qtext code { font-family: "Newsreader", serif; font-style: italic; font-size: 1.05em; background: var(--accent-wash); color: var(--accent); padding: 0 5px; border-radius: 4px; }
+    .options { display: grid; gap: 9px; }
+    .opt {
+        display: flex; align-items: center; gap: 13px; cursor: pointer;
+        padding: 13px 16px; border-radius: 10px; background: var(--card);
+        border: 1.5px solid var(--line); transition: border-color .18s, background .18s, transform .08s;
+        font-size: .98rem;
+    }
+    .opt:hover { border-color: var(--accent-soft); background: #fffaf6; }
+    .opt:active { transform: scale(.992); }
+    .opt input { position: absolute; opacity: 0; pointer-events: none; }
+    .dot { width: 19px; height: 19px; border-radius: 50%; border: 2px solid var(--line-strong); flex: none; display: inline-flex; align-items: center; justify-content: center; transition: border-color .18s; }
+    .opt:hover .dot { border-color: var(--accent-soft); }
+    .opt.sel { border-color: var(--accent); background: var(--accent-wash); }
+    .opt.sel .dot { border-color: var(--accent); }
+    .opt.sel .dot::after { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+    .opt-letter { font-size: .78rem; color: var(--ink-faint); font-weight: 600; min-width: 14px; }
+    .opt.sel .opt-letter { color: var(--accent); }
+
+    .error {
+        color: var(--accent); font-size: .92rem; margin: 18px 0 0; font-weight: 500;
+        background: var(--accent-wash); border: 1px solid #f0d3c4; border-radius: 9px; padding: 11px 15px;
+        display: flex; align-items: center; gap: 9px;
+    }
+    button {
+        font-family: "Inter", sans-serif; background: var(--ink); color: #fff; border: none;
+        padding: 16px 28px; font-size: 1.02rem; border-radius: 11px; cursor: pointer; font-weight: 600;
+        display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+        width: 100%; margin-top: 30px; transition: background .2s, transform .08s; letter-spacing: .01em;
+    }
+    button:hover { background: var(--accent); }
+    button:active { transform: scale(.99); }
+    button svg { transition: transform .2s; }
+    button:hover svg { transform: translateX(3px); }
+
+    /* results */
+    #results-screen { text-align: center; }
+    .result-badge { display: inline-block; font-size: .72rem; letter-spacing: .2em; text-transform: uppercase; color: var(--good); background: var(--good-wash); border: 1px solid #d8e4bf; padding: 6px 14px; border-radius: 20px; font-weight: 600; margin-bottom: 8px; }
+    .final-score {
+        font-family: "Fraunces", serif; font-size: clamp(3.4rem, 14vw, 5.2rem); font-weight: 600;
+        color: var(--accent); margin: 10px 0 14px; line-height: 1; letter-spacing: -.02em;
+    }
+    .feedback-text { font-size: 1.08rem; color: var(--ink-soft); max-width: 46ch; margin: 0 auto 8px; }
+    .scale {
+        display: flex; gap: 4px; justify-content: center; margin: 30px auto 8px; max-width: 380px;
+    }
+    .scale .step { flex: 1; text-align: center; font-size: .74rem; font-weight: 600; color: var(--ink-faint); padding: 7px 2px; border-radius: 7px; background: var(--paper); border: 1px solid var(--line); }
+    .scale .step.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .restart { margin-top: 30px; }
+    .restart button { background: transparent; color: var(--ink-soft); border: 1.5px solid var(--line-strong); }
+    button.btn-orange { background: #e07b39; color: #fff; }
+    button.btn-orange:hover { background: #c9692d; }
+    .restart button:hover { background: var(--paper); color: var(--accent); border-color: var(--accent-soft); }
+
+    .improve { text-align: left; margin: 38px 0 0; padding: 28px 26px; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; }
+    .improve-title { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.25rem; margin: 0 0 6px; color: var(--ink); }
+    .improve-sub { font-size: .96rem; color: var(--ink-soft); margin: 0 0 18px; }
+    .focus-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+    .focus-list li { display: flex; gap: 13px; align-items: flex-start; }
+    .focus-list .fnum { flex: none; width: 24px; height: 24px; border-radius: 7px; background: var(--accent-wash); color: var(--accent); font-weight: 600; font-size: .82rem; display: inline-flex; align-items: center; justify-content: center; margin-top: 2px; }
+    .focus-list .fbody { font-size: .96rem; color: var(--ink); line-height: 1.55; }
+    .focus-list .fbody b { font-weight: 600; color: var(--ink); }
+    .focus-list .fbody span { color: var(--ink-soft); }
+
+    .contact { text-align: left; margin: 22px 0 0; padding: 24px 26px; background: linear-gradient(180deg, #fffdf9, #fbeee6); border: 1px solid #f0d9cb; border-radius: 14px; }
+    .contact-lead { font-family: "Fraunces", serif; font-weight: 600; font-size: 1.12rem; margin: 0 0 6px; color: var(--accent); }
+    .contact-body { font-size: .98rem; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+    .contact-body a { color: var(--accent); font-weight: 600; text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+    .contact-body a:hover { color: var(--accent-soft); }
+    .contact-body b { color: var(--ink); font-weight: 600; }
+
+    .fade { animation: fade .45s ease both; }
+    @keyframes fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+    .hidden { display: none; }
+
+    /* pop-up results tile (matches writing test) */
+    .overlay{position:fixed;inset:0;background:rgba(40,30,15,.5);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;animation:fade .25s ease both;}
+    .overlay.hidden{display:none;}
+    .tile{background:var(--card);border-radius:18px;border:1px solid var(--line);box-shadow:0 20px 60px rgba(40,30,15,.3);max-width:420px;width:100%;overflow:hidden;animation:pop .3s cubic-bezier(.2,.9,.3,1.2) both;}
+    @keyframes pop{from{transform:scale(.9);opacity:0;}to{transform:scale(1);opacity:1;}}
+    .tile-top{padding:22px 26px 16px;text-align:center;}
+    .tile-score{font-family:"Fraunces",serif;font-size:2.6rem;font-weight:600;line-height:1;margin:8px 0 4px;}
+    .tile-score.pass{color:var(--good);}.tile-score.fail{color:var(--accent);}
+    .tile-badge{display:inline-block;font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;font-weight:600;padding:4px 11px;border-radius:14px;}
+    .tile-badge.pass{color:var(--good);background:var(--good-wash);border:1px solid #d8e4bf;}
+    .tile-badge.fail{color:var(--accent);background:var(--accent-wash);border:1px solid #f0d3c4;}
+    .tile-msg{font-size:.96rem;color:var(--ink-soft);margin:10px 0 0;}
+    .tile-items{padding:4px 26px 8px;display:flex;flex-direction:column;gap:6px;}
+    .tile-q{display:flex;align-items:center;gap:9px;font-size:.86rem;padding:7px 10px;border-radius:8px;background:var(--paper);}
+    .tile-q .mark{width:18px;height:18px;border-radius:50%;flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;color:#fff;}
+    .tile-q .mark.ok{background:var(--good);}.tile-q .mark.no{background:var(--accent);}.tile-q .mark.un{background:var(--ink-faint);}
+    .tile-q .qlabel{color:var(--ink-soft);}
+    .tile-btn{padding:16px 26px 22px;}
+    .tile-btn button{margin-top:0;}
+    @media (max-width: 520px) {
+        .passage-box { padding: 20px 18px; }
+        .passage-box p { font-size: 1.12rem; }
+        .inner { padding: 26px 20px; }
+    }
+    /* v2: security & timing */
+    .err{color:var(--danger);background:var(--danger-wash);border:1px solid #f3c9c6;border-radius:9px;padding:11px 15px;font-size:.9rem;margin:0 0 14px;display:none;}
+    .pledge{display:flex;gap:10px;align-items:flex-start;background:var(--gold-wash);border:1px solid var(--line-strong);border-radius:10px;padding:13px 15px;margin:0 0 16px;font-size:.92rem;color:var(--ink-soft);cursor:pointer;}
+    .pledge input{width:auto;margin:3px 0 0;flex:none;}
+    .timerchip{display:inline-flex;align-items:center;gap:6px;font-size:.82rem;font-weight:600;color:var(--ink-soft);background:var(--card);border:1.5px solid var(--line-strong);border-radius:999px;padding:4px 12px;font-variant-numeric:tabular-nums;}
+    .timerchip.warn{color:#92400e;border-color:#f2c063;background:#fdf3df;}
+    .timerchip.danger{color:var(--danger);border-color:#efb6b2;background:var(--danger-wash);}
+    #test-screen .inner, #passage-container{-webkit-user-select:none;user-select:none;}
+    .wm-host{position:relative;}
+    .wm-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3;display:flex;flex-wrap:wrap;gap:38px 54px;align-content:space-around;justify-content:space-around;transform:rotate(-18deg) scale(1.25);}
+    .wm-layer span{font-size:.8rem;font-weight:600;color:rgba(70,55,20,.07);white-space:nowrap;}
+    button.checking{background:var(--line-strong);}
+
+</style>
+<style id="theme-upgrade">
+  :root{
+    --ink:#211c14;--ink-soft:#5c5343;--ink-faint:#8a8068;--paper:#f6f0e4;--card:#fffdf7;
+    --line:#e9e0cc;--line-strong:#d8cbac;
+    --gold:#b08d3e;--gold-soft:#c9a85c;--gold-wash:#f5ecd6;
+    --shadow:0 1px 2px rgba(70,55,20,.05),0 10px 36px rgba(70,55,20,.10);
+  }
+  body{
+    background:var(--paper) !important;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23b08d3e' stroke-opacity='0.07' stroke-width='1'%3E%3Cpath d='M28 2 L54 28 L28 54 L2 28 Z'/%3E%3Ccircle cx='28' cy='28' r='5'/%3E%3C/g%3E%3C/svg%3E"),
+      radial-gradient(circle at 16% 10%,rgba(255,253,247,.9) 0,transparent 42%),
+      radial-gradient(circle at 84% 90%,rgba(201,168,92,.16) 0,transparent 46%),
+      radial-gradient(circle at 50% 50%,rgba(245,236,214,.5) 0,transparent 70%) !important;
+    background-attachment:fixed !important;
+  }
+  .container{position:relative;}
+  .container::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;
+    background:linear-gradient(90deg,var(--gold-soft),var(--gold),var(--gold-soft));z-index:5;}
+
+  button{background:var(--accent) !important;}
+  button:hover{background:var(--accent-soft) !important;}
+  .restart button{background:transparent !important;color:var(--ink-soft) !important;}
+  .restart button:hover{background:var(--paper) !important;color:var(--accent) !important;}
+
+  /* ===== Genre rendering styles ===== */
+  .render{margin:6px 0 22px;}
+  .render-host{background:none !important;border:none !important;padding:0 !important;}
+  mark{background:rgba(154,52,18,.14);color:var(--accent);padding:0 3px;border-radius:3px;font-weight:600;}
+  .ref{padding:0 2px;border-radius:3px;background:rgba(154,52,18,.08);color:var(--accent);}
+  .gf-ui{font-family:inherit;}
+  .gf-bulletin{font-family:"Libre Franklin","Inter",sans-serif;font-weight:700;}
+  .gf-news{font-family:"Special Elite",monospace;}
+  .gf-chat{font-family:"Patrick Hand",cursive;font-size:1.06em;}
+  .gf-review{font-family:"Libre Franklin","Inter",sans-serif;font-style:italic;}
+  .gf-journal{font-family:"Newsreader",Georgia,serif;font-style:italic;}
+
+  /* INFOGRAPHIC */
+  .infographic{display:flex;justify-content:center;}
+  .ig-card{width:100%;max-width:430px;background:#fffdf7;border:2px solid var(--line);border-radius:18px;padding:22px 24px 18px;position:relative;overflow:hidden;}
+  .ig-card::before{content:"";position:absolute;top:0;left:0;right:0;height:6px;background:var(--genre);}
+  .ig-title{font-family:"Fraunces",serif;font-weight:700;font-size:1.7rem;color:var(--genre);text-align:center;margin-top:6px;}
+  .ig-rule{height:1.5px;background:var(--line);margin:12px 0 6px;}
+  .ig-row{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-radius:8px;gap:14px;}
+  .ig-row.alt{background:#fdf6ea;}
+  .ig-key{font-weight:700;color:var(--genre);}
+  .ig-val{color:#2a2722;text-align:right;}
+  .ig-footer{text-align:center;font-style:italic;color:var(--ink-soft);font-size:.92rem;margin-top:12px;}
+
+  /* BULLETIN BOARD */
+  .bulletin .cork{background:#b07a3f;background-image:radial-gradient(rgba(255,255,255,.06) 1px,transparent 1px),radial-gradient(rgba(0,0,0,.07) 1px,transparent 1px);background-size:14px 14px,14px 14px;background-position:0 0,7px 7px;padding:30px 22px;border-radius:10px;border:8px solid #6e4a23;display:flex;justify-content:center;}
+  .flyer{position:relative;background:#fffef9;width:100%;max-width:400px;padding:26px 26px 12px;box-shadow:0 8px 22px rgba(0,0,0,.28);transform:rotate(-1.1deg);font-family:"Libre Franklin","Inter",sans-serif;}
+  .flyer .pin{position:absolute;top:-9px;left:50%;width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff6b6b,#b91c1c);box-shadow:0 3px 5px rgba(0,0,0,.35);transform:translateX(-50%);}
+  .flyer-tag{display:inline-block;background:#b91c1c;color:#fff;font-size:.66rem;font-weight:700;letter-spacing:.16em;padding:3px 10px;border-radius:3px;margin-bottom:10px;}
+  .flyer h3{font-weight:700;font-size:1.18rem;margin:0 0 12px;text-transform:uppercase;line-height:1.25;color:#1c1a14;}
+  .flyer p{font-size:.95rem;margin:0 0 10px;color:#2a2722;line-height:1.5;}
+  .tear-strips{display:flex;border-top:1px dashed #bbb;margin-top:8px;}
+  .tear-strips span{flex:1;border-left:1px dashed #ccc;font-size:.5rem;text-align:center;color:#b91c1c;font-weight:700;padding:6px 0 2px;writing-mode:vertical-rl;text-orientation:mixed;height:54px;}
+  .tear-strips span:first-child{border-left:none;}
+
+  /* NEWSPAPER */
+  .newspaper .paper{background:#f7f1e3;border:1px solid #ddd2b8;padding:22px 24px;box-shadow:inset 0 0 60px rgba(120,100,60,.08);}
+  .paper-masthead{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2.5px double #8a7c5a;padding-bottom:7px;margin-bottom:14px;gap:10px;}
+  .paper-section{font-family:"Special Elite",monospace;font-size:.64rem;letter-spacing:.16em;color:#5c5343;}
+  .paper-date{font-family:"Fraunces",serif;font-style:italic;font-weight:600;font-size:.86rem;color:#3a3225;}
+  .paper-cols{column-count:2;column-gap:22px;column-rule:1px solid #d8cdb0;}
+  .paper-cols h3{font-family:"Special Elite",monospace;font-size:1.12rem;text-align:center;margin:0 0 12px;line-height:1.3;text-transform:uppercase;column-span:all;}
+  .paper-cols p{font-family:"Newsreader",Georgia,serif;font-size:.95rem;text-align:justify;margin:0 0 9px;color:#2c2719;line-height:1.5;}
+
+  /* LINE-STYLE CHAT */
+  .chat .ln-window{background:#8ac6e8;border-radius:14px;overflow:hidden;border:1px solid #cfe3f2;max-width:470px;margin:0 auto;}
+  .ln-titlebar{display:flex;align-items:center;justify-content:space-between;background:#5aa6d6;color:#fff;padding:9px 14px;font-weight:600;}
+  .ln-back,.ln-menu{font-size:1.2rem;opacity:.9;}
+  .ln-chatname{font-size:.96rem;}
+  .ln-feed{padding:16px 12px;display:flex;flex-direction:column;gap:8px;background:#9ccdec;background-image:linear-gradient(#9ccdec,#a9d4ef);}
+  .ln-row{display:flex;gap:8px;align-items:flex-start;max-width:88%;}
+  .ln-row.left{align-self:flex-start;}
+  .ln-row.right{align-self:flex-end;flex-direction:row-reverse;}
+  .ln-av{width:34px;height:34px;border-radius:50%;flex:none;background:#fff;border:1px solid rgba(0,0,0,.08);}
+  .ln-av.spacer{visibility:hidden;}
+  .ln-stack{display:flex;flex-direction:column;gap:2px;}
+  .ln-row.right .ln-stack{align-items:flex-end;}
+  .ln-name{font-size:.72rem;color:#33576e;font-weight:600;padding:0 4px;}
+  .ln-bubble{position:relative;padding:9px 13px;border-radius:16px;font-size:1.04rem;line-height:1.4;max-width:100%;font-family:"Patrick Hand",cursive;}
+  .ln-bubble.left{background:#fff;color:#1c1a14;border-top-left-radius:4px;}
+  .ln-bubble.right{background:#7be07b;color:#16321a;border-top-right-radius:4px;}
+  .chat mark{background:rgba(154,52,18,.16);font-family:inherit;}
+
+  /* WEB REVIEW */
+  .webreview .rv-card{background:#fff;border:1px solid #e6e1d6;border-radius:14px;padding:20px 22px;font-family:"Libre Franklin","Inter",sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.04);}
+  .rv-head{display:flex;gap:12px;align-items:center;margin-bottom:10px;}
+  .rv-avatar{width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,#9a3412,#c2613a);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.95rem;flex:none;}
+  .rv-name{font-weight:700;font-size:.96rem;display:block;}
+  .rv-verified{color:#0e7490;font-size:.72rem;font-weight:600;}
+  .rv-sub{font-size:.78rem;color:var(--ink-faint);}
+  .rv-stars{color:#e0a800;font-size:1.1rem;letter-spacing:2px;margin-bottom:8px;}
+  .rv-score{color:var(--ink-faint);font-size:.78rem;letter-spacing:0;margin-left:6px;}
+  .rv-title{font-weight:700;font-size:1.08rem;margin-bottom:8px;color:#1c1a14;}
+  .rv-body p{font-size:.95rem;margin:0 0 10px;color:#2c2719;line-height:1.55;}
+  .rv-foot{display:flex;gap:18px;border-top:1px solid #eee5d5;padding-top:11px;margin-top:4px;font-size:.8rem;color:var(--ink-faint);font-weight:600;}
+
+  /* SCIENTIFIC JOURNAL */
+  .journal .jr-page{background:#fffefb;border:1px solid #e0dac9;padding:28px 32px;box-shadow:0 2px 8px rgba(0,0,0,.05);}
+  .jr-runhead{display:flex;justify-content:space-between;font-family:"Newsreader",Georgia,serif;font-size:.7rem;font-style:italic;color:#6a6048;border-bottom:1px solid #ddd5c0;padding-bottom:5px;gap:10px;}
+  .jr-doi{font-size:.66rem;color:#a89a78;margin:5px 0 16px;}
+  .jr-title{font-family:"Newsreader",Georgia,serif;font-weight:600;font-size:1.3rem;line-height:1.28;margin:0 0 12px;color:#1c1a14;}
+  .jr-authors{font-family:"Newsreader",Georgia,serif;font-size:.98rem;color:#2c2719;}
+  .jr-affil{font-family:"Newsreader",Georgia,serif;font-style:italic;font-size:.82rem;color:#6a6048;margin-bottom:18px;}
+  .jr-abstract-label{font-size:.66rem;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);margin-bottom:6px;}
+  .jr-body{font-family:"Newsreader",Georgia,serif;font-size:1.0rem;line-height:1.68;text-align:justify;color:#23201a;}
+  .jr-body p{margin:0 0 11px;}
+  .jr-body p.dropcap::first-letter{font-family:"Fraunces",serif;font-weight:700;font-size:3.1rem;float:left;line-height:.82;padding:4px 8px 0 0;color:var(--accent);}
+
+  @media (max-width:520px){
+    .paper-cols{column-count:1;}
+    .jr-page{padding:22px 18px;}
+    .flyer{padding:20px 18px 10px;}
+  }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Intro -->
+    <div id="intro-screen" class="inner fade">
+        <p class="eyebrow">Reading Proficiency · CEFR A1–C1</p>
+        <h1>Adaptive Reading Assessment</h1>
+        <p class="lede">Each passage adapts to your answers. Read carefully — the difficulty of the next text rises or falls based on how accurately you respond.</p>
+        <div class="meta-note">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8a827a" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>
+            <span>Each passage has a <b>time limit</b> shown at the top — enough to read carefully, but the test moves on when time runs out. Highlighted words in each text mark the words a question asks about. This is a monitored test: leaving the screen, copying text, and timings are recorded for your teacher, and the test can be taken <b>once</b>.</span>
+        </div>
+        <div id="sid-wrap" class="hidden" style="margin:0 0 14px;">
+            <label class="field" for="sid-input">Line ID <span class="req">*</span></label>
+            <input id="sid-input" type="text" autocomplete="off" placeholder="your Line ID" maxlength="60" autocapitalize="none" spellcheck="false">
+        </div>
+        <label class="pledge"><input type="checkbox" id="pledge-box"> <span>I will complete this test <b>by myself</b>, without help from other people, AI tools, translators, or dictionaries. I understand my results may be reviewed by my teacher.</span></label>
+        <p id="start-err" class="err"></p>
+        <button id="begin-btn" onclick="startTest()">Begin assessment <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+    </div>
+
+    <!-- Test -->
+    <div id="test-screen" class="hidden">
+        <div class="topbar">
+            <span class="stage-label" id="stage-label">Passage <b id="stage-num">1</b></span>
+            <span class="timerchip" id="node-timer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M9 2h6"/></svg><span id="node-timer-text">--:--</span></span>
+            <div class="pips" id="pips"></div>
+        </div>
+        <div class="inner">
+            <div id="passage-container" class="passage-box"></div>
+            <div class="hint"><span class="swatch">word</span> &nbsp;Highlighted words in the text are the ones asked about below.</div>
+            <div id="questions-container"></div>
+            <p id="validation-error" class="error hidden">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg>
+                Please answer all five questions before continuing.
+            </p>
+            <button id="next-btn" onclick="submitNode()">Check answers <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="results-screen" class="hidden inner">
+        <span class="result-badge">Assessment complete</span>
+        <h2>Your reading level</h2>
+        <div id="final-level" class="final-score"></div>
+        <p id="feedback-text" class="feedback-text"></p>
+        <div class="scale" id="scale"></div>
+        <div style="margin-top:24px;">
+            <button class="btn-orange" onclick="returnToDashboard()">Return to dashboard</button>
+        </div>
+    </div>
+
+    <!-- Locked / error screen -->
+    <div id="lock-screen" class="hidden inner">
+        <h2 style="margin-top:8px;">Test unavailable</h2>
+        <p id="lock-msg" class="feedback-text">This test can only be taken once.</p>
+        <div style="margin-top:20px;"><button class="btn-orange" onclick="returnToDashboard()">Return to dashboard</button></div>
+    </div>
+</div>
+
+<!-- pop-up passage result tile -->
+<div class="overlay hidden" id="overlay"><div class="tile">
+  <div class="tile-top"><span class="tile-badge" id="tile-badge"></span><div class="tile-score" id="tile-score">0/5</div><p class="tile-msg" id="tile-msg"></p></div>
+  <div class="tile-items" id="tile-items"></div>
+  <div class="tile-btn"><button id="tile-next">Next passage <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button></div>
+</div></div>
+
+<script>
+    const testBank = {"A1_Route":{"genre":"Infographic","infographic":{"title":"RIVERSIDE WEEKEND MARKET","rows":[["Open","Sat–Sun, 8 AM – 2 PM"],["Closed","Monday to Friday"],["Parking","Free for 2 hours"],["Fruit","Buy 3 bags, get 1 free"],["Dogs","On a lead only"]],"footer":"Cooking show · Sunday 10 AM"},"questions":[{"q":"What does this poster mainly tell you?","options":["How to cook food","Information about a market","The price of a new car","A list of dog names"]},{"q":"When is the market open?","options":["Every day","Only on Monday","Saturday and Sunday","Friday evening"]},{"q":"You buy three bags of fruit. What happens?","options":["You pay for four bags","You get one more bag free","You get free parking all day","Nothing special"]},{"q":"You want to watch the cooking show. When should you arrive?","options":["8 AM on Saturday","10 AM on Sunday","2 PM on Sunday","10 AM on Monday"]},{"q":"You park your car for three hours. What is true?","options":["All three hours are free","You must pay for some of the time","Cars cannot park there","The market pays you"]}]},"A1_Confirm":{"genre":"Infographic","infographic":{"title":"GREENHILL CITY MUSEUM","rows":[["Open","Tue–Sun, 10 AM – 5 PM"],["Closed","Monday"],["Adults","$6 entry"],["Students","Half price with a card"],["Photos","No flash, please"]],"footer":"Dinosaur talk · Friday 3 PM"},"questions":[{"q":"What is the main purpose of this poster?","options":["To sell dinosaurs","To teach photography","To give museum information","To find lost student cards"]},{"q":"A student with a student card pays…","options":["six dollars","three dollars","nothing","twelve dollars"]},{"q":"You arrive on Monday at noon. Is the museum open?","options":["Yes","No","Only for adults","Only for students"]},{"q":"'No flash, please' tells you to…","options":["take no photos at all","turn off the flash when you take photos","buy a new camera","ask a guide before entering"]},{"q":"When can you hear the dinosaur talk?","options":["Friday at 3 PM","Tuesday at 10 AM","Sunday at 5 PM","Monday at 3 PM"]}]},"A2_Route":{"genre":"Job advertisement","passage":"WEEKEND MARKET STALL HELPER — Fresh & Green Fruit Stall\n\nWe are looking for a friendly helper for our busy fruit stall every Saturday. You will weigh fruit, take payments, and keep the stall <b>tidy</b>. No experience is needed, as we will show you everything on your first day.\n\nWe pay £9 an hour, and you can take home a free bag of fruit after every shift. Helpers who stay for a full year also receive a small <b>yearly bonus</b>.\n\nTo apply, send a message to Mrs. Patel with the subject \"Stall Helper\" and tell us why you would like the job.","questions":[{"q":"What kind of text is this?","options":["A news story","A job advertisement","A shopping list","A letter to a friend"]},{"q":"What does 'tidy' mean here?","options":["expensive","clean and neat","colourful","very heavy"],"refs":["tidy"]},{"q":"Do you need experience for this job?","options":["Yes, at least one year","Yes, but only with fruit","No — you learn everything on the first day","No, but you must have a car"]},{"q":"What do helpers receive after every shift?","options":["Nine pounds extra","A yearly bonus","A free bag of fruit","A new uniform"]},{"q":"How should you apply?","options":["Visit the stall at 7 AM","Telephone Mrs. Patel","Send a message with the subject \"Stall Helper\"","Post a CV to the market office"]}]},"A2_Confirm":{"genre":"Job advertisement","passage":"EVENING LIBRARY ASSISTANT WANTED\n\nGreenpark Library needs a careful assistant for Tuesday and Thursday evenings, from 5 PM to 8 PM. You will return books to the shelves, help visitors find what they need, and keep the reading room quiet. You must be <b>reliable</b>, as the children's corner cannot open without you.\n\nWe pay £10 an hour. Assistants who stay for six months can join a free training course and receive a small end-of-year gift.\n\nYou do not need experience, but you must live near the town centre, because the last bus leaves before the library closes. To apply, email Mr. Osei with the subject \"Library Assistant\" and tell us why you enjoy books.","questions":[{"q":"When would you work?","options":["Every evening","Tuesday and Thursday evenings","Weekend mornings","Monday afternoons"]},{"q":"The word 'reliable' describes a person who…","options":["reads many books","always does what they promise","works very fast","lives far away"],"refs":["reliable"]},{"q":"Why must you live near the town centre?","options":["The pay is higher there","The library gives you a flat","The last bus leaves before the library closes","Mr. Osei lives there"]},{"q":"What can assistants join after six months?","options":["A book club","A free training course","A children's choir","A different library"]},{"q":"How do you apply?","options":["Email Mr. Osei with the subject \"Library Assistant\"","Visit on Tuesday at 5 PM","Leave a letter in the children's corner","Call the town centre office"]}]},"B1_Route":{"genre":"Dialogue","passage":"<b>Nina:</b> Are we still going to the night market on Friday?\n<b>Leo:</b> I want to, but can we <b>play it by ear</b>? My cousin might arrive that evening.\n<b>Nina:</b> Again? You said the same thing last month and we never went.\n<b>Leo:</b> I know, I know. It's not that I don't want to — it's just hard to plan around his flights.\n<b>Nina:</b> How about this: if he lands before six, bring him along. He'd love the food stalls.\n<b>Leo:</b> Now that's an idea. He's always <b>up for</b> trying something new.\n<b>Nina:</b> Perfect. I'll book us a table at the grilled chicken place either way — they don't charge if we cancel before five.","questions":[{"q":"What are Nina and Leo mainly discussing?","options":["Where Leo's cousin lives","Whether to go to the night market on Friday","What to cook on Friday evening","How to book a cheap flight"]},{"q":"What does 'play it by ear' mean here?","options":["decide later, depending on what happens","listen to music together","cancel a plan politely","ask someone older for advice"],"refs":["play it by ear"]},{"q":"Why is Leo unsure about Friday?","options":["He doesn't like night markets","His cousin might arrive that evening","He has no money this month","Nina cancelled their last plan"]},{"q":"What solution does Nina suggest?","options":["Going without Leo","Meeting the cousin at the airport","Bringing the cousin along if he lands early","Moving the plan to next month"]},{"q":"What do we learn about the grilled chicken place?","options":["It closes at five o'clock","It charges nothing if you cancel before five","It has no free tables on Fridays","It is inside the airport"]}]},"B1_Confirm":{"genre":"Dialogue","passage":"<b>Assistant:</b> Good afternoon. What can I do for you?\n<b>Customer:</b> I bought these headphones here on Monday, and the left side has already stopped working. Honestly, <b>I expected better</b>.\n<b>Assistant:</b> I'm sorry to hear that. Have you tried charging them fully overnight?\n<b>Customer:</b> Twice. It made no difference. <b>I'm not leaving without an answer</b>.\n<b>Assistant:</b> I completely understand. As they're less than two weeks old, you can choose a refund or a brand-new pair. Do you have your receipt?\n<b>Customer:</b> It's on my phone. To be honest, I thought you'd send me to the repair centre.\n<b>Assistant:</b> For a new product, that wouldn't be fair. Waiting a month for a repair is no way to treat a customer. Shall I bring a new pair so you can test them before you decide?\n<b>Customer:</b> Yes, please. <b>That's more like it</b>.","questions":[{"q":"Why has the customer come to the shop?","options":["To buy a second pair of headphones","Because one side of the headphones stopped working","To collect a finished repair","To ask about charging cables"]},{"q":"'I'm not leaving without an answer' shows the customer feels…","options":["determined","relaxed","delighted","embarrassed"],"refs":["I'm not leaving without an answer"]},{"q":"What has the customer already tried?","options":["Visiting the repair centre","Charging the headphones fully, twice","Buying a different brand","Updating the software"]},{"q":"What choice does the assistant offer?","options":["A repair or a discount","A refund or a new pair","Waiting a month or paying more","Store credit only"]},{"q":"'That's more like it' means the customer is now…","options":["more confused than before","satisfied with the assistant's offer","ready to complain again","leaving the shop angrily"],"refs":["That's more like it"]}]},"B2_Route":{"genre":"Review","passage":"After months of glowing recommendations from friends, I finally checked in to The Harbour View for a long weekend — and perhaps that was my first mistake. The lobby certainly makes an entrance: marble floors, fresh flowers, and staff who greet you by name before you've reached the desk. The breakfast, too, deserves every word of praise; the pastries alone would justify a return visit.\n\nThe rooms, however, are where the spell begins to <b>wear off</b>. Mine was spotless but surprisingly small, and the advertised 'sea view' required a certain optimism and a lean over the balcony rail. For a hotel charging these rates, 'adequate' is not the word you want coming to mind.\n\nNone of this is to say the staff were anything less than superb — they were, without exception, warm and efficient. I left with the nagging sense of a hotel coasting on its postcard. The Harbour View is not a poor hotel — far from it — but <b>it sells a promise its rooms don't quite keep</b>.","questions":[{"q":"What is the reviewer's overall attitude to the hotel?","options":["Complete disgust from start to finish","Measured disappointment despite real strengths","Total, unreserved enthusiasm","Cold indifference"]},{"q":"What does 'wear off' suggest about the reviewer's first impression?","options":["It grew stronger over time","It gradually faded","It was never positive","It ruined the whole trip"],"refs":["wear off"]},{"q":"Why does the reviewer mention leaning over the balcony rail?","options":["To praise the balcony's size","To suggest the 'sea view' was exaggerated","To warn readers about safety","To describe the pleasant weather"]},{"q":"Which aspects does the reviewer praise without reservation?","options":["The rooms and the rates","The staff and the breakfast","The balcony and the lobby music","The location and the pool"]},{"q":"The final phrase 'it sells a promise its rooms don't quite keep' means…","options":["the hotel's image outruns the actual experience","the rooms are not for sale","the hotel is breaking the law","guests must keep their own promises"],"refs":["it sells a promise its rooms don't quite keep"]}]},"B2_Confirm":{"genre":"Review","passage":"On paper, the PageOne Reader has everything: a crisp screen, weeks of battery, and a price that undercuts the market leaders. In practice, it's a device of two halves. The screen genuinely is the best I've used at this price, and the battery claims are, if anything, modest — I managed three weeks of nightly reading before reaching for the charger, which is close to unheard of.\n\nWhere the PageOne <b>comes unstuck</b> is its store. The catalogue is thinner than the big names', and the search function has an uncanny talent for finding every book except the one you typed. Buying from other shops is possible, but the transfer process is fiddly enough that <b>'possible' is doing a lot of work in that sentence</b>.\n\nSo, should you buy one? It depends. If you mostly read classics and bestsellers and don't mind a little tinkering, it's a genuine bargain. If you expect everything to simply appear at the tap of a thumb, pay the extra for a bigger name. The hardware is superb; the ecosystem hasn't caught up.","questions":[{"q":"What does the reviewer conclude about the battery?","options":["It falls short of the claims","It performs even better than advertised","It lasts about three days","It cannot be fully charged"]},{"q":"'comes unstuck' is closest in meaning to…","options":["succeeds unexpectedly","runs into trouble","becomes cheaper","sticks together"],"refs":["comes unstuck"]},{"q":"What is the device's main weakness, according to the review?","options":["The screen quality","The store and its search function","The high price","The heavy design"]},{"q":"What does the reviewer imply with \"'possible' is doing a lot of work in that sentence\"?","options":["Transferring books is much harder than 'possible' suggests","The device works very hard","The sentence contains a grammar mistake","Buying from other shops is forbidden"],"refs":["'possible' is doing a lot of work in that sentence"]},{"q":"Who would the reviewer most recommend the PageOne to?","options":["People who dislike reading","Readers who mostly want popular titles and accept some tinkering","People who demand everything to work instantly","Reviewers of rival devices"]}]},"C1_Route":{"genre":"Academic article","passage":"Forgetting has traditionally been framed as a failure — the regrettable <b>decay</b> of information that a better-engineered brain would retain. A growing body of work in cognitive science suggests this framing is not merely uncharitable but mistaken. Far from a passive erosion, much forgetting appears to be an active, regulated process: the brain expends metabolic resources to weaken particular traces, pruning the specific in favour of the general.\n\nThe functional logic is compelling. An organism navigating a changing environment profits little from a perfect archive of outdated detail; what it requires is a flexible model of how the world tends to behave. On this account, forgetting is <b>the price of abstraction</b> — discarding the noise of individual episodes so that their underlying regularities can emerge. Sceptics note, reasonably, that pathological memory loss shows none of this elegance, and that celebrating forgetting risks romanticising dysfunction. <b>The caution is fair; the conclusion does not follow</b>. That a process can fail catastrophically tells us little about its ordinary purpose. The more productive question is not how to abolish forgetting, but how to distinguish its adaptive forms from its destructive ones.","questions":[{"q":"What is the passage's central claim?","options":["Forgetting is often an active, adaptive process rather than mere failure","Forgetting should be abolished by better engineering","Memory decay proves the brain is poorly designed","Pathological memory loss is secretly beneficial"]},{"q":"The phrase 'the price of abstraction' refers to…","options":["the metabolic cost of remembering everything","discarding episodic detail so general patterns can emerge","the financial expense of memory research","the danger of forgetting people's names"],"refs":["the price of abstraction"]},{"q":"According to the passage, what do sceptics point out?","options":["That forgetting saves metabolic energy","That pathological memory loss shows none of this adaptive elegance","That perfect archives are highly useful","That abstraction is impossible without language"]},{"q":"What is the function of 'The caution is fair; the conclusion does not follow'?","options":["It concedes the sceptics' point while rejecting their inference","It dismisses the sceptics as unreasonable","It fully accepts the sceptics' conclusion","It changes the subject to a new study"],"refs":["The caution is fair; the conclusion does not follow"]},{"q":"What can be inferred about a 'perfect archive' of memory?","options":["It would be ideal for any organism","It would be of limited use in a changing environment","It already exists in most animals","It is the brain's ultimate goal"]}]},"C1_Confirm":{"genre":"Academic article","passage":"The proposition that crowds are collectively wiser than their wisest members has enjoyed a remarkable run since Galton's famous ox-weighing anecdote. In its strongest form — that aggregating many independent guesses reliably outperforms expertise — it has been thoroughly <b>qualified</b> by a century of evidence. Crowds are wise, it turns out, only under conditions that modern life conspires to erode: independence of judgement, diversity of information, and the absence of persuasive voices.\n\nContemporary research locates the trouble precisely in <b>social influence</b>. When individuals can observe one another's estimates, opinions converge rapidly — and confidence rises even as accuracy falls. The crowd does not become stupid so much as it <b>becomes an echo</b>, its many voices reducible to a few loud ones. Yet it would be a mistake to conclude that aggregation has been debunked; carefully structured collectives, from forecasting tournaments to prediction markets, continue to embarrass individual experts. The lesson is architectural rather than arithmetical: <b>a crowd is an instrument that must be tuned</b>. To ask whether crowds are simply wise or simply foolish is to pose a false dichotomy; the defensible question is under what designs their wisdom can be preserved.","questions":[{"q":"What has a century of evidence done to the strong claim about crowd wisdom?","options":["Confirmed it in full","Substantially qualified it","Ignored it completely","Reversed it entirely"]},{"q":"According to the passage, what most undermines crowd accuracy?","options":["The sheer size of crowds","Social influence between members","A lack of individual expertise","Prediction markets"]},{"q":"The crowd 'becomes an echo' means that…","options":["the crowd grows physically louder","many voices come to repeat a few influential ones","the crowd falls completely silent","estimates become more accurate over time"],"refs":["becomes an echo"]},{"q":"'A crowd is an instrument that must be tuned' suggests that…","options":["crowds perform best with music","collective wisdom depends on careful design","crowds should be abandoned as instruments","tuning is a matter of simple arithmetic"],"refs":["a crowd is an instrument that must be tuned"]},{"q":"The author's overall stance on collective judgement is best described as…","options":["unconditional enthusiasm","conditional endorsement","complete rejection","amused indifference"]}]}};
+
+    // ===== Genre rendering layer =====
+    const AV_MAN = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><clipPath id='c'><circle cx='32' cy='32' r='32'/></clipPath></defs><g clip-path='url(%23c)'><rect width='64' height='64' fill='%23cfe3f5'/><circle cx='32' cy='25' r='13' fill='%23f1c9a5'/><path d='M19 19 a13 13 0 0 1 26 0 v2 h-4 q-9 -7 -18 0 v-2z' fill='%234a3728'/><path d='M14 64 v-9 q0-12 18-12 t18 12 v9z' fill='%233b6ea5'/><path d='M27 44 l5 6 5-6 z' fill='%23fff'/></g></svg>";
+    const AV_WOMAN = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><clipPath id='c'><circle cx='32' cy='32' r='32'/></clipPath></defs><g clip-path='url(%23c)'><rect width='64' height='64' fill='%23f5d6e3'/><path d='M17 30 q-3-22 15-22 t15 22 q0 14-15 14 t-15-14z' fill='%236b3b2a'/><circle cx='32' cy='27' r='12' fill='%23f4cdaa'/><path d='M16 64 v-8 q0-12 16-12 t16 12 v8z' fill='%23b5497f'/><path d='M19 30 q-4 6-2 16 M45 30 q4 6 2 16' stroke='%236b3b2a' stroke-width='4' fill='none'/></g></svg>";
+    const AV_LOGO = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><defs><clipPath id='c'><circle cx='32' cy='32' r='32'/></clipPath></defs><g clip-path='url(%23c)'><rect width='64' height='64' fill='%23103d2e'/><rect x='14' y='14' width='36' height='36' rx='9' fill='%2316a34a'/><path d='M24 33 l6 6 12-14' stroke='%23fff' stroke-width='5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></g></svg>";
+
+    const reviewMeta = {
+      B2_Route:{initials:'JP',name:'Jonas Pryce',subject:'The Harbour View Hotel',when:'3 days ago',headline:'Coasting on its postcard',helpful:57},
+      B2_Confirm:{initials:'AR',name:'Amara Reyes',subject:'PageOne Reader',when:'5 days ago',headline:'Superb hardware, patchy store',helpful:96}
+    };
+    const journalMeta = {
+      C1_Route:{journal:'Trends in Cognitive Sciences',vol:52,no:2,pp:'134\u2013149',doi:'1016/tics.2026.02',title:'Adaptive Forgetting: From Passive Decay to Regulated Design',authors:'M. Okafor, T. Lindqvist',affil:'Institute for Memory & Cognition, Halden University'},
+      C1_Confirm:{journal:'Behavioural Public Science',vol:9,no:4,pp:'301\u2013318',doi:'1093/bps.2026.09',title:'Tuning the Crowd: Social Influence and the Limits of Aggregation',authors:'R. Dominguez, K. Aoki',affil:'Centre for Collective Behaviour, Westbrook Institute'}
+    };
+    const chatMeta = {
+      B1_Route:{title:'Nina & Leo',people:{'Nina':{display:'Nina',avatar:AV_WOMAN,side:'left'},'Leo':{display:'Leo',avatar:AV_MAN,side:'right'}}},
+      B1_Confirm:{title:'Support chat',people:{'Assistant':{display:'TechDesk-Priya',avatar:AV_LOGO,side:'left'},'Customer':{display:'Dan',avatar:AV_MAN,side:'right'}}}
+    };
+    const genreFontClass = {
+      'Infographic':'gf-ui','Job advertisement-Route':'gf-bulletin','Job advertisement-Confirm':'gf-news',
+      'Dialogue':'gf-chat','Review':'gf-review','Academic article':'gf-journal'
+    };
+
+    function escHTML(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+    function fmtPassage(raw){
+      return String(raw).split(/(<b>.*?<\/b>)/g).map(function(p){
+        var m=p.match(/^<b>([\s\S]*?)<\/b>$/);
+        return m? '<mark>'+escHTML(m[1])+'</mark>' : escHTML(p);
+      }).join('');
+    }
+    function genreKeyFor(nodeKey){
+      var n=testBank[nodeKey];
+      if(n.genre==='Job advertisement') return nodeKey.indexOf('Route')>=0 ? 'Job advertisement-Route':'Job advertisement-Confirm';
+      return n.genre;
+    }
+    // Render question text, wrapping ref phrases in the genre font
+    function renderQuestionText(nodeKey,qObj){
+      var text=String(qObj.q).replace(/<\/?b>/g,'');
+      var cls=genreFontClass[genreKeyFor(nodeKey)]||'gf-ui';
+      var refs=(qObj.refs||[]).slice().sort(function(a,b){return b.length-a.length;});
+      var tokens=[];
+      refs.forEach(function(phrase){
+        var idx=text.indexOf(phrase);
+        if(idx>=0){
+          var token='@@'+tokens.length+'@@';
+          tokens.push('<span class="ref '+cls+'">'+escHTML(phrase)+'</span>');
+          text=text.slice(0,idx)+token+text.slice(idx+phrase.length);
+        }
+      });
+      var out=escHTML(text);
+      tokens.forEach(function(htmlPiece,i){ out=out.split('@@'+i+'@@').join(htmlPiece); });
+      return out;
+    }
+
+    function renderInfographic(node,accentVar){
+      var info=node.infographic;
+      var rows=info.rows.map(function(r,i){return '<div class="ig-row '+(i%2?'alt':'')+'"><span class="ig-key">'+escHTML(r[0])+'</span><span class="ig-val">'+escHTML(r[1])+'</span></div>';}).join('');
+      return '<div class="render infographic" style="--genre:'+accentVar+'"><div class="ig-card"><div class="ig-title">'+escHTML(info.title)+'</div><div class="ig-rule"></div>'+rows+'<div class="ig-footer">'+escHTML(info.footer)+'</div></div></div>';
+    }
+    function renderBulletin(node){
+      var lines=node.passage.split('\n').filter(function(x){return x.trim();});
+      var body=lines.slice(1).map(function(l){return '<p>'+fmtPassage(l)+'</p>';}).join('');
+      var strips=''; for(var i=0;i<6;i++){strips+='<span>stall@<br>freshgreen<br>.co</span>';}
+      return '<div class="render bulletin"><div class="cork"><div class="flyer"><span class="pin"></span><div class="flyer-tag">NOW HIRING</div><h3>'+fmtPassage(lines[0])+'</h3>'+body+'<div class="tear-strips">'+strips+'</div></div></div></div>';
+    }
+    function renderNewspaper(node){
+      var lines=node.passage.split('\n').filter(function(x){return x.trim();});
+      var body=lines.slice(1).map(function(l){return '<p>'+fmtPassage(l)+'</p>';}).join('');
+      return '<div class="render newspaper"><div class="paper"><div class="paper-masthead"><span class="paper-section">CLASSIFIEDS \u00b7 SITUATIONS VACANT</span><span class="paper-date">The Daily Chronicle</span></div><div class="paper-cols"><h3>'+fmtPassage(lines[0])+'</h3>'+body+'</div></div></div>';
+    }
+    function renderChat(node,meta){
+      var lines=node.passage.split('\n').filter(function(x){return x.trim();});
+      var turns=lines.map(function(l){var m=l.match(/^<b>(.*?):<\/b>\s*([\s\S]*)$/);return m?{who:m[1],text:m[2]}:{who:'',text:l};});
+      var lastWho=null;
+      var rows=turns.map(function(t){
+        var p=meta.people[t.who];
+        var showHeader=t.who!==lastWho; lastWho=t.who;
+        var header=showHeader?'<div class="ln-name">'+escHTML(p.display)+'</div>':'';
+        var avatar=showHeader?'<img class="ln-av" src="'+p.avatar+'" alt="">':'<span class="ln-av spacer"></span>';
+        return '<div class="ln-row '+p.side+'">'+avatar+'<div class="ln-stack">'+header+'<div class="ln-bubble '+p.side+'">'+fmtPassage(t.text)+'</div></div></div>';
+      }).join('');
+      return '<div class="render chat"><div class="ln-window"><div class="ln-titlebar"><span class="ln-back">\u2039</span><span class="ln-chatname">'+escHTML(meta.title)+'</span><span class="ln-menu">\u22ef</span></div><div class="ln-feed">'+rows+'</div></div></div>';
+    }
+    function renderReview(node,meta){
+      var paras=node.passage.split('\n').filter(function(x){return x.trim();}).map(function(p){return '<p>'+fmtPassage(p)+'</p>';}).join('');
+      return '<div class="render webreview"><div class="rv-card"><div class="rv-head"><div class="rv-avatar">'+escHTML(meta.initials)+'</div><div class="rv-meta"><span class="rv-name">'+escHTML(meta.name)+' <span class="rv-verified">\u2713 Verified</span></span><span class="rv-sub">Reviewing <b>'+escHTML(meta.subject)+'</b> \u00b7 '+escHTML(meta.when)+'</span></div></div><div class="rv-stars">\u2605\u2605\u2605\u2606\u2606<span class="rv-score">3.0 / 5</span></div><div class="rv-title">'+escHTML(meta.headline)+'</div><div class="rv-body">'+paras+'</div><div class="rv-foot"><span>\ud83d\udc4d Helpful ('+meta.helpful+')</span><span>\ud83d\udcac Reply</span><span>\u2691 Report</span></div></div></div>';
+    }
+    function renderJournal(node,meta){
+      var paras=node.passage.split('\n').filter(function(x){return x.trim();});
+      var body='<p class="dropcap">'+fmtPassage(paras[0])+'</p>'+paras.slice(1).map(function(p){return '<p>'+fmtPassage(p)+'</p>';}).join('');
+      return '<div class="render journal"><div class="jr-page"><div class="jr-runhead"><span>'+escHTML(meta.journal)+'</span><span>Vol. '+meta.vol+', No. '+meta.no+' (2024), pp. '+meta.pp+'</span></div><div class="jr-doi">https://doi.org/10.'+meta.doi+'</div><h3 class="jr-title">'+escHTML(meta.title)+'</h3><div class="jr-authors">'+escHTML(meta.authors)+'</div><div class="jr-affil">'+escHTML(meta.affil)+'</div><div class="jr-abstract-label">Abstract</div><div class="jr-body">'+body+'</div></div></div>';
+    }
+    function renderReference(nodeKey){
+      var n=testBank[nodeKey];
+      switch(n.genre){
+        case 'Infographic': return renderInfographic(n, nodeKey==='A1_Route'?'var(--g-green)':'var(--g-teal)');
+        case 'Job advertisement': return nodeKey.indexOf('Route')>=0 ? renderBulletin(n):renderNewspaper(n);
+        case 'Dialogue': return renderChat(n, chatMeta[nodeKey]);
+        case 'Review': return renderReview(n, reviewMeta[nodeKey]);
+        case 'Academic article': return renderJournal(n, journalMeta[nodeKey]);
+        default: return '<div class="passage-box"><p>'+fmtPassage(n.passage||'')+'</p></div>';
+      }
+    }
+
+    /* ================= v2: server-graded, timed, monitored ================= */
+    // Answers and routing are NOT in this page. Each passage is graded by the
+    // server, which also decides the next passage and records the final level.
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyP8ImtoDVhwDq4hXinBNwmzx0SZfbxrLrtg8Be8qfohXYo6tGDoapDj7VX7VpbmRzuuQ/exec";
+
+    function hashParams(){
+        const out={};
+        location.hash.replace(/^#/,'').split('&').forEach(kv=>{
+            const i=kv.indexOf('='); if(i<0){ if(kv) out[kv]='1'; return; }
+            out[kv.slice(0,i)]=decodeURIComponent(kv.slice(i+1));
+        });
+        return out;
+    }
+    const HP = hashParams();
+    const session = { token:null, sid:HP.sid||'', nick:HP.nick||'' };
+
+    function api(params){
+        const body=Object.keys(params).map(k=>encodeURIComponent(k)+"="+encodeURIComponent(params[k])).join("&");
+        const ctrl=('AbortController' in window)?new AbortController():null;
+        const to=ctrl?setTimeout(()=>ctrl.abort(),45000):null;
+        return fetch(SCRIPT_URL,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded;charset=UTF-8"},body,signal:ctrl?ctrl.signal:undefined})
+            .then(r=>r.text()).then(t=>{if(to)clearTimeout(to);return JSON.parse(t);});
+    }
+
+    let currentNode = null;
+    let currentQuestions = [];
+    let stage = 1;
+
+    /* ---------- integrity monitor: record (and lightly deter), never accuse ---------- */
+    let events=[], evStart=0, hiddenAt=0, monitoring=false;
+    const GRACE_MS=15000;
+    function evT(){ return evStart?Math.round((Date.now()-evStart)/1000):0; }
+    function pushEv(type,extra){ events.push(Object.assign({type:type,atSec:evT()},extra||{})); if(events.length>300)events.shift(); }
+    function onVis(){ if(!monitoring)return;
+        if(document.hidden){ hiddenAt=Date.now(); }
+        else if(hiddenAt){ const d=Date.now()-hiddenAt; hiddenAt=0; pushEv('blur',{durMs:d,flagged:d>=GRACE_MS}); } }
+    function onBlur(){ if(monitoring && !document.hidden && !hiddenAt) hiddenAt=Date.now(); }
+    function onFocus(){ if(monitoring && hiddenAt && !document.hidden){ const d=Date.now()-hiddenAt; hiddenAt=0; pushEv('blur',{durMs:d,flagged:d>=GRACE_MS}); } }
+    function blockCopy(e){ if(!monitoring)return; e.preventDefault(); pushEv(e.type+'_blocked'); }
+    function blockCtx(e){ if(!monitoring)return; if(e.target.closest && e.target.closest('#test-screen')){ e.preventDefault(); pushEv('context_blocked'); } }
+    function startMonitor(){
+        if(monitoring)return; monitoring=true; evStart=Date.now(); events=[]; hiddenAt=0;
+        document.addEventListener('visibilitychange',onVis);
+        window.addEventListener('blur',onBlur);
+        window.addEventListener('focus',onFocus);
+        document.addEventListener('copy',blockCopy,true);
+        document.addEventListener('cut',blockCopy,true);
+        document.addEventListener('contextmenu',blockCtx,true);
+        window.addEventListener('beforeprint',function(){pushEv('print_attempt');});
+    }
+    function drainEvents(){ const e=events.slice(); events=[]; return e; }
+
+    /* ---------- per-passage countdown ---------- */
+    let nodeTimerId=null, nodeSecondsLeft=0, nodeStartedAt=0;
+    function fmtT(s){const m=Math.floor(s/60),ss=s%60;return String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0');}
+    function startNodeTimer(sec){
+        clearInterval(nodeTimerId);
+        nodeSecondsLeft=sec; nodeStartedAt=Date.now();
+        const chip=document.getElementById('node-timer'),txt=document.getElementById('node-timer-text');
+        chip.classList.remove('warn','danger'); txt.innerText=fmtT(sec);
+        nodeTimerId=setInterval(()=>{
+            nodeSecondsLeft--; if(nodeSecondsLeft<0)nodeSecondsLeft=0;
+            txt.innerText=fmtT(nodeSecondsLeft);
+            chip.classList.remove('warn','danger');
+            if(nodeSecondsLeft<=30)chip.classList.add('danger');
+            else if(nodeSecondsLeft<=60)chip.classList.add('warn');
+            if(nodeSecondsLeft<=0){clearInterval(nodeTimerId);nodeTimerId=null;pushEv('time_expired',{node:currentNode});submitNode(true);}
+        },1000);
+    }
+
+    /* ---------- per-question response telemetry ---------- */
+    let qMeta=[];
+    function noteAnswer(qIdx){
+        const t=Math.round((Date.now()-nodeStartedAt)/1000);
+        if(!qMeta[qIdx]) qMeta[qIdx]={first:t,changes:0};
+        else qMeta[qIdx].changes++;
+        qMeta[qIdx].last=t;
+    }
+
+    function styleInlineCode(text){ return text.replace(/'([^']+)'/g,'<code>$1</code>'); }
+
+    async function startTest(){
+        const err=document.getElementById('start-err');
+        err.style.display='none';
+        if(!session.sid){
+            const wrap=document.getElementById('sid-wrap');
+            const val=(document.getElementById('sid-input').value||'').trim();
+            if(!val){ wrap.classList.remove('hidden');
+                err.textContent='Please enter your Line ID so your result can be recorded.'; err.style.display='block'; return; }
+            session.sid=val;
+        }
+        if(!document.getElementById('pledge-box').checked){
+            err.textContent='Please read and tick the statement above before starting.'; err.style.display='block'; return;
+        }
+        const btn=document.getElementById('begin-btn'); btn.disabled=true; btn.textContent='Starting\u2026';
+        try{
+            const res=await api({action:'start_test', lineid:session.sid, test:'Reading'});
+            if(!res.ok){ showLock(res.error||'This test is unavailable right now.'); return; }
+            session.token=res.token;
+            document.getElementById('intro-screen').classList.add('hidden');
+            document.getElementById('test-screen').classList.remove('hidden');
+            startMonitor();
+            currentNode=res.firstNode;
+            loadNode(currentNode, res.timeLimit);
+        }catch(e){
+            btn.disabled=false; btn.innerHTML='Begin assessment';
+            err.textContent='Could not reach the server. Please check your connection and try again.'; err.style.display='block';
+        }
+    }
+
+    function showLock(msg){
+        ['intro-screen','test-screen','results-screen'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+        document.getElementById('lock-msg').textContent=msg;
+        document.getElementById('lock-screen').classList.remove('hidden');
+    }
+
+    function renderPips(){
+        const pips=document.getElementById('pips');
+        const maxStages=4; let html='';
+        for(let i=1;i<=maxStages;i++){
+            let cls='pip';
+            if(i<stage)cls+=' done'; else if(i===stage)cls+=' active';
+            html+='<span class="'+cls+'"></span>';
+        }
+        pips.innerHTML=html;
+        document.getElementById('stage-num').innerText=stage;
+    }
+
+    function watermark(host){
+        if(!session.sid) return;
+        const layer=document.createElement('div'); layer.className='wm-layer';
+        for(let i=0;i<24;i++){const s=document.createElement('span');s.textContent=session.sid;layer.appendChild(s);}
+        host.classList.add('wm-host'); host.appendChild(layer);
+    }
+
+    function loadNode(level, timeLimit){
+        document.getElementById('validation-error').classList.add('hidden');
+        scrollTopNow();
+        qMeta=[];
+        const data=testBank[level];
+        currentQuestions=data.questions;
+        renderPips();
+
+        const pc=document.getElementById('passage-container');
+        pc.className='render-host';
+        pc.innerHTML=renderReference(level);
+        watermark(pc);
+
+        let qHTML='';
+        const letters=['A','B','C','D'];
+        data.questions.forEach((qObj,index)=>{
+            // Display order is shuffled per session; submitted values keep the
+            // authored option index, so shared "answer letters" are useless.
+            const order=qObj.options.map((_,i)=>i);
+            for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));const tmp=order[i];order[i]=order[j];order[j]=tmp;}
+            qHTML+='<div class="question-block">'
+                +'<div class="qhead"><span class="qnum">'+(index+1)+'</span>'
+                +'<span class="qtext">'+renderQuestionText(level,qObj)+'</span></div>'
+                +'<div class="options">';
+            order.forEach((optIndex,slot)=>{
+                qHTML+='<label class="opt" data-q="'+index+'">'
+                    +'<input type="radio" name="q'+index+'" value="'+optIndex+'">'
+                    +'<span class="dot"></span>'
+                    +'<span class="opt-letter">'+letters[slot]+'</span>'
+                    +'<span class="opt-body">'+qObj.options[optIndex]+'</span>'
+                    +'</label>';
+            });
+            qHTML+='</div></div>';
+        });
+
+        const qc=document.getElementById('questions-container');
+        qc.innerHTML=qHTML;
+        document.getElementById('test-screen').classList.remove('fade');
+        void document.getElementById('test-screen').offsetWidth;
+        document.querySelector('#test-screen .inner').classList.add('fade');
+
+        qc.querySelectorAll('.opt').forEach(label=>{
+            label.addEventListener('click',()=>{
+                const q=label.getAttribute('data-q');
+                qc.querySelectorAll('.opt[data-q="'+q+'"]').forEach(l=>l.classList.remove('sel'));
+                label.classList.add('sel');
+                noteAnswer(parseInt(q));
+            });
+        });
+
+        startNodeTimer(timeLimit || 300);
+    }
+
+    let submitting=false;
+
+    async function submitNode(auto){
+        if(submitting)return;
+
+        const answers=[]; let allAnswered=true;
+        for(let i=0;i<currentQuestions.length;i++){
+            const sel=document.querySelector('input[name="q'+i+'"]:checked');
+            if(!sel){ allAnswered=false; answers.push(-1); }
+            else answers.push(parseInt(sel.value));
+        }
+        if(!auto && !allAnswered){
+            document.getElementById('validation-error').classList.remove('hidden');
+            return;
+        }
+        submitting=true;
+        clearInterval(nodeTimerId); nodeTimerId=null;
+        const btn=document.getElementById('next-btn');
+        const oldHtml=btn.innerHTML; btn.disabled=true; btn.classList.add('checking'); btn.textContent='Checking your answers\u2026';
+
+        const elapsed=Math.round((Date.now()-nodeStartedAt)/1000);
+        let res=null;
+        try{
+            res=await api({action:'grade_node', token:session.token, node:currentNode,
+                answers:JSON.stringify(answers), elapsed:String(elapsed),
+                qmeta:JSON.stringify(qMeta), events:JSON.stringify(drainEvents())});
+        }catch(e){ res=null; }
+        btn.disabled=false; btn.classList.remove('checking'); btn.innerHTML=oldHtml;
+
+        if(!res || !res.ok){
+            submitting=false;
+            const ve=document.getElementById('validation-error');
+            ve.classList.remove('hidden');
+            ve.innerHTML=(res && res.error) ? res.error :
+                'Connection problem \u2014 your answers were not lost. Please press the button again.';
+            if(!auto) startNodeTimer(Math.max(nodeSecondsLeft,20));
+            return;
+        }
+
+        showTile(res.score, res.passed, res.detail, !!res.final);
+        document.getElementById('tile-next').onclick=()=>{
+            hideTile(); submitting=false;
+            if(res.final){ showResults(res.resultCode, res.level); }
+            else{ currentNode=res.next; stage++; loadNode(currentNode, res.timeLimit); }
+        };
+    }
+
+    /* ===== pop-up tile ===== */
+    function showTile(score,passed,detail,isLast){
+        document.getElementById('tile-score').textContent=score+'/5';
+        document.getElementById('tile-score').className='tile-score '+(passed?'pass':'fail');
+        const badge=document.getElementById('tile-badge');
+        badge.textContent=passed?'Passage passed':'Keep going';
+        badge.className='tile-badge '+(passed?'pass':'fail');
+        let msg;
+        if(isLast){ msg='Your reading level is ready.'; }
+        else{ msg=passed?'You move up to a harder passage.':'We will adjust to a more comfortable passage.'; }
+        document.getElementById('tile-msg').textContent=msg;
+        document.getElementById('tile-items').innerHTML=detail.map((d,i)=>{
+            const m=d==='ok'?'ok':(d==='no'?'no':'un');
+            const sym=d==='ok'?'\u2713':(d==='no'?'\u2715':'\u2013');
+            const lab=d==='un'?'Not answered':(d==='ok'?'Correct':'Not correct');
+            return '<div class="tile-q"><span class="mark '+m+'">'+sym+'</span><span class="qlabel">Question '+(i+1)+' \u2014 '+lab+'</span></div>';
+        }).join('');
+        document.getElementById('tile-next').innerHTML=(isLast?'See my result':'Next passage')+' <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>';
+        document.getElementById('overlay').classList.remove('hidden');
+    }
+    function hideTile(){ document.getElementById('overlay').classList.add('hidden'); }
+
+
+    const resultsMap = {
+        'RESULT_C1_HIGH': { level: 'C1', band: 'C1', text: 'Excellent. You confirmed your level across two advanced texts, showing strong command of complex, abstract material.' },
+        'RESULT_C1_LOW':  { level: 'B2 / C1', band: 'B2', text: 'Strong work. You reached the C1 text, but performance was not consistent across both advanced passages, placing you on the upper boundary.' },
+        'RESULT_B2_HIGH': { level: 'B2', band: 'B2', text: 'Very good. You confirmed B2 across two texts, comfortably handling implied meaning and advanced vocabulary.' },
+        'RESULT_B2_LOW':  { level: 'B1 / B2', band: 'B1', text: 'Solid work. You reached the B2 level, but performance varied across the two texts, placing you on the B1\u2013B2 boundary.' },
+        'RESULT_B1_HIGH': { level: 'B1', band: 'B1', text: 'Good job. You confirmed B1 across two texts, reliably grasping main ideas and context clues in standard material.' },
+        'RESULT_B1_LOW':  { level: 'A2 / B1', band: 'A2', text: 'You reached the B1 level, but performance varied. You are transitioning from basic fact-finding to independent reading.' },
+        'RESULT_A2_HIGH': { level: 'A2', band: 'A2', text: 'You confirmed A2 across two texts, accurately extracting explicit details and following standard instructions.' },
+        'RESULT_A2_LOW':  { level: 'A1 / A2', band: 'A1', text: 'You reached the A2 level, but performance varied across the two texts, placing you on the A1\u2013A2 boundary.' },
+        'RESULT_A1_HIGH': { level: 'A1', band: 'A1', text: 'You confirmed A1 across two texts, reliably identifying basic nouns, times, and direct information.' },
+        'RESULT_A1_LOW':  { level: 'Pre-A1 / A1', band: 'Pre-A1', text: 'You handled a basic A1 text, but performance varied on the second. Keep building foundational vocabulary.' },
+        'RESULT_PRE_A1':  { level: 'Pre-A1', band: 'Pre-A1', text: 'Keep practicing. Focus on foundational vocabulary and finding direct facts in short texts.' }
+    };
+
+    function reportToHub(level){
+        try{
+            if(window.parent && window.parent!==window && location.hash.indexOf('hub=1')>=0){
+                window.parent.postMessage({type:'cefr_result', level:String(level||'')}, '*');
+            }
+        }catch(e){}
+    }
+
+    function showResults(resultCode, levelFromServer){
+        monitoring=false;
+        document.getElementById('test-screen').classList.add('hidden');
+        const rs=document.getElementById('results-screen');
+        rs.classList.remove('hidden');
+        rs.classList.add('fade');
+
+        const finalData=resultsMap[resultCode] || {level:levelFromServer||'', band:levelFromServer||'', text:''};
+        document.getElementById('final-level').innerText=finalData.level;
+        document.getElementById('feedback-text').innerText=finalData.text;
+        reportToHub(finalData.level);
+
+        const order=['Pre-A1','A1','A2','B1','B2','C1'];
+        const scale=document.getElementById('scale');
+        scale.innerHTML=order.map(s=>
+            '<span class="step'+(s===finalData.band?' on':'')+'">'+s+'</span>'
+        ).join('');
+    }
+
+    function returnToDashboard(){
+        try{
+            if(window.parent && window.parent!==window){
+                window.parent.postMessage({type:'cefr_return_dashboard'}, '*');
+            }
+        }catch(e){}
+    }
+
+    function scrollTopNow(){
+        try{ window.scrollTo({top:0,behavior:'smooth'}); }catch(e){ try{window.scrollTo(0,0);}catch(_){} }
+        try{ document.documentElement.scrollTop=0; document.body.scrollTop=0; }catch(e){}
+        try{ if(window.parent && window.parent!==window){ window.parent.postMessage({type:'cefr_scrolltop'}, '*'); } }catch(e){}
+    }
+
+</script>
+
+</body>
+</html>
