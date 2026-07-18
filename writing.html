@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>CEFR Adaptive Writing Assessment</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
@@ -167,6 +167,27 @@ button.main:disabled{background:var(--line-strong);cursor:not-allowed;transform:
 .timerchip.danger{color:#b91c1c;border-color:#efb6b2;background:#fdeceb;}
 #round-screen .inner{-webkit-user-select:none;user-select:none;}
 .hidden{display:none!important;}
+/* v3: CEFR criteria breakdown */
+.crit-row{border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin:0 0 10px;background:#fffdf7;}
+.crit-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.crit-name{font-weight:600;color:var(--ink);font-size:.96rem;}
+.crit-chip{flex:none;font-weight:700;font-size:.8rem;letter-spacing:.03em;color:#7a5a12;background:var(--gold-wash,#f5ecd6);border:1px solid var(--line-strong);border-radius:999px;padding:3px 12px;}
+.crit-sub{font-size:.8rem;color:var(--ink-faint);margin:2px 0 0;}
+.crit-comment{font-size:.9rem;color:var(--ink-soft);margin:8px 0 0;padding:8px 11px;background:#faf6ea;border-left:3px solid var(--line-strong);border-radius:0 8px 8px 0;line-height:1.55;}
+.crit-lists{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px;}
+.crit-listtitle{font-weight:700;font-size:.82rem;letter-spacing:.05em;text-transform:uppercase;margin:0 0 7px;}
+.crit-listtitle.good{color:var(--good,#3d7a44);} .crit-listtitle.work{color:var(--accent,#b4622d);}
+.crit-list{margin:0;padding:0 0 0 18px;} .crit-list li{font-size:.9rem;color:var(--ink);line-height:1.55;margin:0 0 6px;}
+/* v3: small-screen & touch polish */
+html{-webkit-text-size-adjust:100%;}
+body{padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);}
+.chip,.m-item,.opt{min-height:42px;}
+textarea{font-size:16px!important;}
+@media (max-width:480px){
+  .timerchip{padding:3px 9px;font-size:.78rem;margin-left:6px;}
+  .topbar{flex-wrap:wrap;row-gap:8px;}
+  .crit-lists{grid-template-columns:1fr;}
+}
 </style></head>
 <body>
 <div class="container">
@@ -334,6 +355,7 @@ async function startTest(){
     document.getElementById('intro-screen').classList.add('hidden');
     document.getElementById('round-screen').classList.remove('hidden');
     startIntegrityMonitor();
+    tryFullscreen();
     renderRound();
   }catch(e){
     btn.disabled=false; btn.innerHTML='Begin assessment';
@@ -649,8 +671,15 @@ function startIntegrityMonitor(){
   document.addEventListener('copy',onCopyCut,true);
   document.addEventListener('cut',onCopyCut,true);
   document.addEventListener('contextmenu',onCtx,true);
+  document.addEventListener('fullscreenchange',onFsChange);
   window.addEventListener('blur',onWinBlur);
   window.addEventListener('focus',onWinFocus);
+}
+function onFsChange(){ if(acActive && !document.fullscreenElement) acLog.push({type:'fullscreen_exit', atSec:acElapsed()}); }
+function tryFullscreen(){
+  try{ var el=document.documentElement;
+    if(el.requestFullscreen) el.requestFullscreen().catch(function(){});
+  }catch(e){}
 }
 // Send-and-keep: events already sent to the server are not re-sent, but the
 // full log is kept for the final report.
@@ -962,6 +991,50 @@ function buildNarrative(grammarLevel, aiLevel, s, finalLevel, noContent){
   };
 }
 
+// CEFR criteria breakdown: per-criterion level chips with quoted evidence,
+// plus the examiner's strengths and improvement points.
+function criteriaPaneHTML(evaluation){
+  const c = evaluation.criteria;
+  const names = {
+    taskFulfilment:   ['Task fulfilment', 'Answers all parts of the task, appropriate format and register'],
+    coherenceCohesion:['Coherence & cohesion', 'Organisation, paragraphing, linking devices'],
+    grammaticalRange: ['Grammatical range & accuracy', 'Variety of structures and control of errors'],
+    lexicalRange:     ['Lexical range & control', 'Breadth and precision of vocabulary']
+  };
+  let rows = '';
+  if(c){
+    for(const key in names){
+      const item = c[key];
+      if(!item) continue;
+      const lvl = (FULL_ORDER.indexOf(item.level)>=0) ? item.level : '–';
+      rows += `
+        <div class="crit-row">
+          <div class="crit-head">
+            <span class="crit-name">${names[key][0]}</span>
+            <span class="crit-chip">${esc(lvl)}</span>
+          </div>
+          <div class="crit-sub">${names[key][1]}</div>
+          ${item.comment ? '<div class="crit-comment">'+esc(item.comment)+'</div>' : ''}
+        </div>`;
+    }
+  }
+  const list = (arr, cls, title) => (arr && arr.length)
+    ? `<div class="crit-listwrap"><div class="crit-listtitle ${cls}">${title}</div><ul class="crit-list">`+
+      arr.slice(0,4).map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>'
+    : '';
+  if(!rows && !(evaluation.strengths||[]).length && !(evaluation.improvements||[]).length) return '';
+  return `
+    <div class="pane">
+      <div class="pane-title">CEFR criteria breakdown</div>
+      <p style="color:var(--ink-soft);font-size:.92rem;margin:0 0 14px;">How your writing measured against each CEFR written-production criterion.</p>
+      ${rows}
+      <div class="crit-lists">
+        ${list(evaluation.strengths, 'good', 'What you did well')}
+        ${list(evaluation.improvements, 'work', 'What to work on next')}
+      </div>
+    </div>`;
+}
+
 function finishWithAI(essayText, evaluation) {
   const cefrToNum = {'Pre-A1':0, 'A1':20, 'A2':40, 'B1':60, 'B2':80, 'C1':100};
   const grammarLevel = (evaluation.grammarLevel && FULL_ORDER.indexOf(evaluation.grammarLevel)>=0) ? evaluation.grammarLevel : (state.essayLevel || state.levelReached);
@@ -1002,8 +1075,12 @@ function finishWithAI(essayText, evaluation) {
   // as text only, so a short-but-strong response is no longer unfairly suppressed.
   const wScore = noContent ? 0 : Math.round(sCoh*0.25 + sGra*0.35 + sVoc*0.20 + sTop*0.20);
 
-  // Band shown for the writing task (used in the Writing Task Result pane + badge).
-  const writingBand = noContent ? 'Pre-A1' : scoreToLevel(wScore);
+  // Band shown for the writing task: the server's CEFR-rubric band (the AI's
+  // holistic judgement cross-checked against its own criterion scores) is the
+  // source of truth; the local score formula is only a fallback.
+  const writingBand = (evaluation.writingBand && FULL_ORDER.indexOf(evaluation.writingBand)>=0)
+      ? evaluation.writingBand
+      : (noContent ? 'Pre-A1' : scoreToLevel(wScore));
   const displayWritingLevel = writingBand;
 
   // ---- Grammar section level ----
@@ -1094,6 +1171,8 @@ function finishWithAI(essayText, evaluation) {
       </table>
     </div>
 
+    ${criteriaPaneHTML(evaluation)}
+
     <div class="pane">
       <div class="pane-title">Next steps</div>
       <p class="feedback-text" style="border-left:3px solid var(--gold);">${esc(narrative.nextSteps)}</p>
@@ -1125,6 +1204,9 @@ function finishWithAI(essayText, evaluation) {
     writingLevel: displayWritingLevel,
     combinedScore: combinedScore,
     narrative: narrative,
+    criteria: evaluation.criteria || null,
+    strengths: evaluation.strengths || [],
+    improvements: evaluation.improvements || [],
     roundResponses: roundResponses,
     integrity: integritySummary()
   });
